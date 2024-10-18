@@ -14,7 +14,7 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Atlas connected"))
   .catch((err) => console.log(err));
-app.get("/", (req, res)=> res.send("We are live"));
+app.get("/api", (req, res)=> res.send("We are live"));
 app.use("/api", router.router);
 
 app.listen(PORT, () => {
