@@ -17,6 +17,6 @@ mongoose
 app.get("/", (req, res) => res.send("We are live"));
 app.use("/", router.router);
 
-app.listen(PORT, () => {
+app.listen(8080, () => {
   console.log(`Server is running on port ${PORT}`);
 });
