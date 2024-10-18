@@ -22,14 +22,21 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   }
 
   Future<void> fetchProgramDetails() async {
-    final response = await http.get(Uri.parse(
-        'http://192.168.31.66:8080/api/programs/${widget.programId}'));
-    if (response.statusCode == 200) {
-      setState(() {
-        program = json.decode(response.body);
-      });
-    } else {
-      throw Exception('Failed to load program details');
+    try {
+      final response = await http.get(Uri.parse(
+          'http://192.168.31.66:8080/api/programs/${widget.programId}'));
+      if (response.statusCode == 200) {
+        setState(() {
+          program = json.decode(response.body);
+        });
+      } else {
+        throw Exception('Failed to load program details');
+      }
+    } catch (e) {
+      // Error handling
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching program details: $e')),
+      );
     }
   }
 
@@ -37,7 +44,7 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: Colors.black, // Set the background color to black
+        color: Colors.black,
         child: program.isEmpty
             ? Center(child: CircularProgressIndicator())
             : Column(
@@ -48,11 +55,16 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                       Container(
                         height: 250,
                         width: double.infinity,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(program['image']),
-                            fit: BoxFit.cover,
-                          ),
+                        child: FadeInImage.assetNetwork(
+                          placeholder: 'assets/placeholder_image.png', // Fallback image
+                          image: program['image'] ?? '',
+                          fit: BoxFit.cover,
+                          imageErrorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              'assets/placeholder_image.png',
+                              fit: BoxFit.cover,
+                            ); // Local fallback in case of URL error
+                          },
                         ),
                       ),
                       Container(
@@ -77,7 +89,7 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              program['name'],
+                              program['name'] ?? '',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
@@ -95,19 +107,19 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                       color: const Color.fromARGB(255, 42, 48, 58), // Background color
                       padding: const EdgeInsets.all(20), // Optional padding
                       child: Text(
-                        program['desc'],
+                        program['desc'] ?? '',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontFamily: "Courier"),
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontFamily: "Courier",
+                        ),
                       ),
                     ),
                   ),
-
                   // List of tracks
                   Expanded(
                     child: ListView.builder(
-                      itemCount: program['tracks'].length,
+                      itemCount: program['tracks']?.length ?? 0,
                       itemBuilder: (context, index) {
                         return GestureDetector(
                           onTap: () {
@@ -150,7 +162,7 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    program['tracks'][index]['name'],
+                                    program['tracks'][index]['name'] ?? '',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -159,7 +171,7 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                                   ),
                                   SizedBox(height: 5),
                                   Text(
-                                    program['tracks'][index]['desc'],
+                                    program['tracks'][index]['desc'] ?? '',
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.7),
                                       fontSize: 14,
@@ -186,7 +198,6 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
               icon: Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            // You can add more buttons here if needed
           ],
         ),
       ),

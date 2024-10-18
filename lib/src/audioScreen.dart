@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:palette_generator/palette_generator.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class AudioPlayerScreen extends StatefulWidget {
   const AudioPlayerScreen({super.key, required this.track});
@@ -14,13 +15,14 @@ class AudioPlayerScreen extends StatefulWidget {
 class AudioPlayerScreenState extends State<AudioPlayerScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool isPlaying = false;
+  bool isLoading = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
-  Color backgroundColor = Colors.white; // Default background color
-  Color buttonColor = Colors.black; // Default button color
-  Color textColor = Colors.black; // Default text color
-  Color seekBarColor = Colors.black; // Default seek bar color
-  bool isLoadingPalette = true; // Flag to check if palette is loading
+  Color backgroundColor = Colors.white;
+  Color buttonColor = Colors.black;
+  Color textColor = Colors.black;
+  Color seekBarColor = Colors.black;
+  bool isLoadingPalette = true;
 
   @override
   void initState() {
@@ -39,39 +41,109 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
     _audioPlayer.onPlayerComplete.listen((_) {
       setState(() {
         position = Duration.zero;
-        isPlaying = false; // Reset state after playback complete
+        isPlaying = false;
       });
     });
   }
 
   Future<void> _initPalette() async {
-    final PaletteGenerator paletteGenerator =
-        await PaletteGenerator.fromImageProvider(
-      NetworkImage(widget.track['image']),
-    );
+    try {
+      final PaletteGenerator paletteGenerator =
+          await PaletteGenerator.fromImageProvider(
+        NetworkImage(widget.track['image']),
+      );
 
-    setState(() {
-      backgroundColor = paletteGenerator.lightMutedColor?.color ?? Colors.orangeAccent;
-      buttonColor = paletteGenerator.darkVibrantColor?.color ?? Colors.black;
-      textColor = paletteGenerator.vibrantColor?.color ?? Colors.black; // Ensure text is always visible
-      seekBarColor = paletteGenerator.dominantColor?.color ?? Colors.white;
-      isLoadingPalette = false; // Update the loading state
-    });
+      setState(() {
+        backgroundColor =
+            paletteGenerator.lightMutedColor?.color ?? Colors.orangeAccent;
+        buttonColor = paletteGenerator.darkVibrantColor?.color ?? Colors.black;
+        textColor = paletteGenerator.vibrantColor?.color ?? Colors.black;
+        seekBarColor = paletteGenerator.dominantColor?.color ?? Colors.white;
+        isLoadingPalette = false;
+      });
+    } catch (e) {
+      showErrorToast('Failed to load image.');
+      setState(() {
+        isLoadingPalette = false;
+        backgroundColor = Colors.grey; // Fallback background color
+      });
+    }
   }
 
   Future<void> togglePlayPause() async {
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
     try {
       if (isPlaying) {
         await _audioPlayer.pause();
       } else {
         await _audioPlayer.play(UrlSource(widget.track['audioUrl']));
       }
-      setState(() {
-        isPlaying = !isPlaying;
-      });
+
+      if (mounted) {
+        // Check if the widget is still mounted
+        setState(() {
+          isPlaying = !isPlaying;
+        });
+      }
     } catch (e) {
-      print('Error playing audio: $e');
+      showErrorToast('Failed to load audio.');
+      if (mounted) {
+        Navigator.of(context)
+            .pop(); // Ensure context is valid before navigating back
+      }
+    } finally {
+      if (mounted) {
+        // Check if the widget is still mounted
+        setState(() {
+          isLoading = false; // Stop loading
+        });
+      }
     }
+  }
+
+  Future<void> forwardAudio() async {
+    final newPosition = position + Duration(seconds: 10);
+    if (newPosition < duration) {
+      await _audioPlayer.seek(newPosition);
+    }
+  }
+
+  Future<void> rewindAudio() async {
+    final newPosition = position - Duration(seconds: 10);
+    if (newPosition > Duration.zero) {
+      await _audioPlayer.seek(newPosition);
+    }
+  }
+
+  bool _hasShownImageToast = false; // Flag for image toast
+  bool _hasShownAudioToast = false; // Flag for audio toast
+  void showErrorToast(String message, {bool isImageError = false}) {
+    if (isImageError && _hasShownImageToast)
+      return; // Prevent repeated image toast
+    if (!isImageError && _hasShownAudioToast)
+      return; // Prevent repeated audio toast
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
+    if (isImageError) {
+      _hasShownImageToast = true; // Set flag for image error
+    } else {
+      _hasShownAudioToast = true; // Set flag for audio error
+    }
+
+    // Reset the flag after a certain time to allow future toasts
+    Future.delayed(Duration(seconds: 5), () {
+      if (isImageError) {
+        _hasShownImageToast = false;
+      } else {
+        _hasShownAudioToast = false;
+      }
+    });
   }
 
   String formatDuration(Duration duration) {
@@ -84,14 +156,13 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor, // Dynamic background color
+      backgroundColor: backgroundColor,
       body: SafeArea(
-        child: isLoadingPalette // Show loading indicator until palette is ready
+        child: isLoadingPalette
             ? Center(child: CircularProgressIndicator())
             : Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Top AppBar with back and close icons
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Row(
@@ -109,7 +180,6 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                     ),
                   ),
 
-                  // Title and description
                   Column(
                     children: [
                       Text(
@@ -132,7 +202,6 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                     ],
                   ),
 
-                  // Image for the track
                   Container(
                     height: 300,
                     width: 300,
@@ -141,17 +210,19 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                       image: DecorationImage(
                         image: NetworkImage(widget.track['image']),
                         fit: BoxFit.cover,
+                        onError: (_, __) {
+                          showErrorToast('Failed to load image.');
+                        },
                       ),
                     ),
                   ),
 
-// Share and Like buttons
+                  // Share and Like buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -164,7 +235,6 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                           ),
                           Text(
                             "Singer's name",
-                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
                               color: textColor.withOpacity(0.9),
@@ -172,29 +242,26 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.share, color: buttonColor),
-                              onPressed: () {
-                                // Share functionality goes here
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.favorite_border,
-                                  color: buttonColor),
-                              onPressed: () {
-                                // Like functionality goes here
-                              },
-                            ),
-                          ],
-                        ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.share, color: buttonColor),
+                            onPressed: () {
+                              // Share functionality goes here
+                            },
+                          ),
+                          IconButton(
+                            icon:
+                                Icon(Icons.favorite_border, color: buttonColor),
+                            onPressed: () {
+                              // Like functionality goes here
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  // Playback slider and controls
+
                   Column(
                     children: [
                       Padding(
@@ -202,14 +269,13 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                         child: SliderTheme(
                           data: SliderTheme.of(context).copyWith(
                             thumbShape: const RoundSliderThumbShape(
-                                enabledThumbRadius: 5.0), // Adjust thumb size
+                                enabledThumbRadius: 5.0),
                             trackHeight: 2.0,
                             activeTrackColor: seekBarColor,
                             inactiveTrackColor: Colors.white38,
                           ),
                           child: Slider(
-                            activeColor: Colors.black,
-                            inactiveColor: Colors.black26,
+                            activeColor: seekBarColor,
                             min: 0,
                             max: duration.inSeconds.toDouble(),
                             value: position.inSeconds.toDouble(),
@@ -248,14 +314,34 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                     ],
                   ),
 
-                  IconButton(
-                    // Play / Pause button
-                    iconSize: 98,
-                    icon: Icon(isPlaying
-                        ? Icons.pause_circle_filled
-                        : Icons.play_circle_filled),
-                    color: buttonColor,
-                    onPressed: togglePlayPause,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        iconSize: 48,
+                        icon: Icon(Icons.replay_10, color: buttonColor),
+                        onPressed: rewindAudio,
+                      ),
+                      IconButton(
+                        // Play / Pause button or loading indicator
+                        iconSize: 98,
+                        icon: isLoading
+                            ? CircularProgressIndicator(
+                                color: buttonColor,
+                              )
+                            : Icon(isPlaying
+                                ? Icons.pause_circle_filled
+                                : Icons.play_circle_filled),
+                        color: buttonColor,
+                        onPressed: isLoading ? null : togglePlayPause,
+                      ),
+                      SizedBox(height: 40),
+                      IconButton(
+                        iconSize: 48,
+                        icon: Icon(Icons.forward_10, color: buttonColor),
+                        onPressed: forwardAudio,
+                      ),
+                    ],
                   ),
                   SizedBox(height: 40),
                 ],
@@ -266,8 +352,7 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
 
   @override
   void dispose() {
-    _audioPlayer
-        .dispose(); // Properly dispose of the player to avoid memory leaks
+    _audioPlayer.dispose();
     super.dispose();
   }
 }

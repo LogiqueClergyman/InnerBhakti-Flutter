@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'programDetails.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProgramListScreen extends StatefulWidget {
   const ProgramListScreen({super.key});
@@ -33,14 +34,19 @@ class ProgramListScreenState extends State<ProgramListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var currentIndex = 1;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Colors.orange, // Start with orange
-              Colors.white,  // End with white
+              Colors.orange.shade300,
+              Colors.white,
             ],
+            stops: [
+              0.0,
+              0.3
+            ], // Adjust the second value to change where the gradient ends
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -48,15 +54,16 @@ class ProgramListScreenState extends State<ProgramListScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Prarthana Plans',
-                    style: TextStyle(
-                      fontSize: 24,
+                    'InnerBhakti',
+                    style: GoogleFonts.bacasimeAntique(
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
+                      color: Colors.orange[900],
                     ),
                   ),
                   Row(
@@ -68,6 +75,22 @@ class ProgramListScreenState extends State<ProgramListScreen> {
                   ),
                 ],
               ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
+                  child: Text(
+                    "Prarthana Plans",
+                    style: GoogleFonts.bacasimeAntique(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
             ),
             Expanded(
               child: programs.isEmpty
@@ -88,12 +111,25 @@ class ProgramListScreenState extends State<ProgramListScreen> {
                               Navigator.push(
                                 context,
                                 PageRouteBuilder(
-                                  transitionDuration: Duration(milliseconds: 200),
-                                  pageBuilder: (context, animation, secondaryAnimation) =>
-                                      ProgramDetailsScreen(programId: programs[index]['_id']),
-                                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                    return ScaleTransition(
-                                      scale: animation,
+                                  transitionDuration:
+                                      Duration(milliseconds: 200),
+                                  pageBuilder: (context, animation,
+                                          secondaryAnimation) =>
+                                      ProgramDetailsScreen(
+                                          programId: programs[index]['_id']),
+                                  transitionsBuilder: (context, animation,
+                                      secondaryAnimation, child) {
+                                    const begin = 0.0;
+                                    const end = 2.0;
+                                    const curve = Curves.easeIn;
+
+                                    var tween = Tween(begin: begin, end: end)
+                                        .chain(CurveTween(curve: curve));
+                                    var opacityAnimation =
+                                        animation.drive(tween);
+
+                                    return FadeTransition(
+                                      opacity: opacityAnimation,
                                       child: child,
                                     );
                                   },
@@ -106,7 +142,8 @@ class ProgramListScreenState extends State<ProgramListScreen> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16),
                                     image: DecorationImage(
-                                      image: NetworkImage(programs[index]['image']),
+                                      image: NetworkImage(
+                                          programs[index]['image']),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -120,10 +157,12 @@ class ProgramListScreenState extends State<ProgramListScreen> {
                                   bottom: 16,
                                   left: 16,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        programs[index]['name'] ?? 'Unnamed Program',
+                                        programs[index]['name'] ??
+                                            'Unnamed Program',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 18,
@@ -150,25 +189,110 @@ class ProgramListScreenState extends State<ProgramListScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        onTap: (index) {
-          // Handle navigation here
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'Guide',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore),
-            label: 'Explore',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Me',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        height: 80, // Set a fixed height for the BottomNavigationBar
+        child: BottomNavigationBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          currentIndex: currentIndex,
+          onTap: (index) {
+            setState(() {
+              currentIndex = index;
+            });
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: currentIndex == 0
+                          ? Colors.orange
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.book_outlined,
+                      color: currentIndex == 0 ? Colors.white : Colors.black,
+                      size: 22,
+                    ),
+                  ),
+                  Text(
+                    'Guide',
+                    style: GoogleFonts.bacasimeAntique(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: currentIndex == 1
+                          ? Colors.orange
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      Icons.widgets_outlined,
+                      color: currentIndex == 1 ? Colors.white : Colors.black,
+                      size: 22,
+                    ),
+                  ),
+                  Text(
+                    'Explore',
+                    style: GoogleFonts.bacasimeAntique(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: currentIndex == 2
+                          ? Colors.orange
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.person_outline,
+                      color: currentIndex == 2 ? Colors.white : Colors.black,
+                      size: 22,
+                    ),
+                  ),
+                  Text(
+                    'Me',
+                    style: GoogleFonts.bacasimeAntique(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              label: '',
+            ),
+          ],
+        ),
       ),
     );
   }
