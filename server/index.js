@@ -15,8 +15,8 @@ mongoose
   .then(() => console.log("Atlas connected"))
   .catch((err) => console.log(err));
 app.get("/", (req, res) => res.send("We are live"));
-app.use("/", router.router);
+app.use("/api", router.router);
 
-app.listen(8080, () => {
+app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
