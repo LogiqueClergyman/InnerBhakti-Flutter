@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'audioScreen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProgramDetailsScreen extends StatefulWidget {
   final String programId;
@@ -24,7 +25,7 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
   Future<void> fetchProgramDetails() async {
     try {
       final response = await http.get(Uri.parse(
-          'http://192.168.31.66:8080/api/programs/${widget.programId}'));
+          'https://inner-bhakti-flutter-server.vercel.app/api/programs/${widget.programId}'));
       if (response.statusCode == 200) {
         setState(() {
           program = json.decode(response.body);
@@ -56,7 +57,8 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                         height: 250,
                         width: double.infinity,
                         child: FadeInImage.assetNetwork(
-                          placeholder: 'assets/placeholder_image.png', // Fallback image
+                          placeholder:
+                              'assets/placeholder_image.png', // Fallback image
                           image: program['image'] ?? '',
                           fit: BoxFit.cover,
                           imageErrorBuilder: (context, error, stackTrace) {
@@ -88,15 +90,11 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              program['name'] ?? '',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 10),
+                            Text(program['name'] ?? '',
+                                style: GoogleFonts.playfairDisplay(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 40)),
                           ],
                         ),
                       ),
@@ -104,7 +102,8 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                   ),
                   SizedBox(
                     child: Container(
-                      color: const Color.fromARGB(255, 42, 48, 58), // Background color
+                      color: const Color.fromARGB(
+                          255, 42, 48, 58), // Background color
                       padding: const EdgeInsets.all(20), // Optional padding
                       child: Text(
                         program['desc'] ?? '',
@@ -163,18 +162,18 @@ class ProgramDetailsScreenState extends State<ProgramDetailsScreen> {
                                 children: [
                                   Text(
                                     program['tracks'][index]['name'] ?? '',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: GoogleFonts.aBeeZee(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                   SizedBox(height: 5),
                                   Text(
                                     program['tracks'][index]['desc'] ?? '',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
+                                    style: GoogleFonts.playfair(
+                                      color: Colors.white,
                                       fontSize: 14,
+                                      fontWeight: FontWeight.normal,
                                     ),
                                   ),
                                 ],

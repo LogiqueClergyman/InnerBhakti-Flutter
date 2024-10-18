@@ -21,8 +21,8 @@ class ProgramListScreenState extends State<ProgramListScreen> {
   }
 
   Future<void> fetchPrograms() async {
-    final response =
-        await http.get(Uri.parse('http://192.168.31.66:8080/api/programs'));
+    final response = await http.get(Uri.parse(
+        'https://inner-bhakti-flutter-server.vercel.app/api/programs'));
     if (response.statusCode == 200) {
       setState(() {
         programs = json.decode(response.body);
@@ -138,6 +138,7 @@ class ProgramListScreenState extends State<ProgramListScreen> {
                             },
                             child: Stack(
                               children: [
+                                // Background Image
                                 Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16),
@@ -148,14 +149,31 @@ class ProgramListScreenState extends State<ProgramListScreen> {
                                     ),
                                   ),
                                 ),
+                                // Gradient Overlay
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(
+                                            0.7), // Adjust opacity as needed
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                // Lock Icon
                                 Positioned(
                                   top: 16,
                                   right: 16,
                                   child: Icon(Icons.lock, color: Colors.white),
                                 ),
+                                // Text Overlay
                                 Positioned(
                                   bottom: 16,
-                                  left: 16,
+                                  left: 10,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -163,18 +181,17 @@ class ProgramListScreenState extends State<ProgramListScreen> {
                                       Text(
                                         programs[index]['name'] ??
                                             'Unnamed Program',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: GoogleFonts.bacasimeAntique(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold),
                                       ),
                                       Text(
                                         '20 Days Plan',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
+                                        style: GoogleFonts.playfairDisplay(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w100),
                                       ),
                                     ],
                                   ),

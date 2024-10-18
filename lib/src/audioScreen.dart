@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AudioPlayerScreen extends StatefulWidget {
   const AudioPlayerScreen({super.key, required this.track});
@@ -57,8 +58,8 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
         backgroundColor =
             paletteGenerator.lightMutedColor?.color ?? Colors.orangeAccent;
         buttonColor = paletteGenerator.darkVibrantColor?.color ?? Colors.black;
-        textColor = paletteGenerator.vibrantColor?.color ?? Colors.black;
-        seekBarColor = paletteGenerator.dominantColor?.color ?? Colors.white;
+        textColor = paletteGenerator.darkMutedColor?.color ?? Colors.black;
+        seekBarColor = paletteGenerator.darkMutedColor?.color ?? Colors.white;
         isLoadingPalette = false;
       });
     } catch (e) {
@@ -182,20 +183,28 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
 
                   Column(
                     children: [
-                      Text(
-                        widget.track['name'],
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0), // Adjust padding as needed
+                        child: Text(
+                          widget.track['name'],
+                          style: GoogleFonts.yesevaOne(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                          maxLines: 1, // Limit to one line
+                          overflow: TextOverflow
+                              .ellipsis, // Show ellipsis if text overflows
+                          softWrap: false, // Prevent wrapping
                         ),
                       ),
                       SizedBox(height: 8),
                       Text(
                         widget.track['desc'],
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: GoogleFonts.satisfy(
+                          fontSize: 20,
                           color: textColor.withOpacity(0.9),
                         ),
                       ),
@@ -227,7 +236,7 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                         children: [
                           Text(
                             widget.track['name'],
-                            style: TextStyle(
+                            style: GoogleFonts.alice(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: textColor,
@@ -235,8 +244,8 @@ class AudioPlayerScreenState extends State<AudioPlayerScreen> {
                           ),
                           Text(
                             "Singer's name",
-                            style: TextStyle(
-                              fontSize: 12,
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 14,
                               color: textColor.withOpacity(0.9),
                             ),
                           ),
